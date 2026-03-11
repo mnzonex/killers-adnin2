@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | KILLERS VIP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/admin.css">
+</head>
+
+<body class="admin-body">
+    <!-- Admin Lock Screen -->
+    <div id="adminLockScreen" class="lock-overlay active">
+        <div class="lock-card">
+            <div class="lock-header">
+                <i class="fas fa-shield-alt shield-icon"></i>
+                <h2>Admin Access Locked</h2>
+                <p>Enter your credentials to manage Killers VIP</p>
+            </div>
+
+            <div class="lock-fields">
+                <div class="field">
+                    <label for="adminIdInput"><i class="fas fa-user-shield"></i> Admin ID</label>
+                    <input type="text" id="adminIdInput" placeholder="Enter Admin ID" autocomplete="off">
+                </div>
+                <div class="field">
+                    <label for="adminSecretInput"><i class="fas fa-key"></i> Secret Key</label>
+                    <input type="password" id="adminSecretInput" placeholder="Enter Secret Key" autocomplete="off">
+                </div>
+                <button id="unlockBtn" class="btn-unlock"><i class="fas fa-sign-in-alt"></i> Login to Dashboard</button>
+            </div>
+
+            <p id="lockMsg" class="lock-msg"></p>
+            <div class="lock-footer">
+                <p>Forgot Credentials? Contact Database Admin</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-wrapper">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <div class="sidebar-logo">
+                <img src="assets/logo.jpg" alt="Logo">
+                <span>KILLERS <em>ADMIN</em></span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#users" onclick="showTab('users')"><i class="fas fa-users"></i> User Management</a>
+                <a href="#promo" onclick="showTab('promo')"><i class="fas fa-tag"></i> Promo Codes</a>
+                <a href="#announcements" onclick="showTab('announcements')"><i class="fas fa-bullhorn"></i>
+                    Announcements</a>
+                <a href="#settings" onclick="showTab('settings')"><i class="fas fa-cog"></i> Settings</a>
+            </nav>
+            <div class="sidebar-footer">
+                <button onclick="signOut()" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <header class="admin-header">
+                <h2 id="tab-title">Analytics Overview</h2>
+                <div class="admin-profile">
+                    <span id="admin-email">admin@killersvip.com</span>
+                    <div class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></div>
+                </div>
+            </header>
+
+            <div class="tab-content" id="analytics-tab">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon users"><i class="fas fa-users"></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-total-users">0</h3>
+                            <p>Total Registered</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon pending"><i class="fas fa-clock"></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-pending-users">0</h3>
+                            <p>Pending Activations</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon active"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <h3 id="stat-active-users">0</h3>
+                            <p>Active Subscribers</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leaderboard -->
+                <div class="admin-section">
+                    <h3>Marketing Leaderboard</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Promo Code</th>
+                                    <th>Owner</th>
+                                    <th>Total Signups</th>
+                                    <th>Conversions</th>
+                                    <th>Conv Rate %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-body">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content hidden" id="users-tab">
+                <div class="user-filters">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search by email or name..." id="user-search">
+                    </div>
+                    <select id="status-filter">
+                        <option value="all">All Status</option>
+                        <option value="Pending">Pending Only</option>
+                        <option value="Active">Active Only</option>
+                        <option value="Registered">Registered Only</option>
+                        <option value="Banned">Banned</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Package</th>
+                                <th>Points</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content hidden" id="announcements-tab">
+                <div class="promo-header">
+                    <h3>Announcement Management</h3>
+                    <button class="btn-add" onclick="openAnnouncementModal()"><i class="fas fa-plus"></i> New
+                        Announcement</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Content</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="announcement-table-body">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="tab-content hidden" id="promo-tab">
+                <div class="promo-header">
+                    <h3>Promo Code Management</h3>
+                    <button class="btn-add" onclick="openPromoModal()"><i class="fas fa-plus"></i> Add New
+                        Promo</button>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Owner</th>
+                                <th>WhatsApp</th>
+                                <th>Bank Details</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="promo-table-body">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Promo CRUD Modal -->
+    <div id="promoModal" class="modal">
+        <div class="modal-content">
+            <h3 id="promo-modal-title">Add New Promo Code</h3>
+            <div class="field">
+                <label>Promo Code</label>
+                <input type="text" id="promo-code-input" placeholder="e.g. AMILA10">
+            </div>
+            <div class="field">
+                <label>Owner Name</label>
+                <input type="text" id="promo-owner-input">
+            </div>
+            <div class="field">
+                <label>WhatsApp Number</label>
+                <input type="text" id="promo-whatsapp-input">
+            </div>
+            <div class="field-grid">
+                <div class="field">
+                    <label>Crypto Price ($)</label>
+                    <input type="number" id="promo-crypto-price" value="30">
+                </div>
+                <div class="field">
+                    <label>Forex Price ($)</label>
+                    <input type="number" id="promo-forex-price" value="40">
+                </div>
+                <div class="field">
+                    <label>All-in-One Price ($)</label>
+                    <input type="number" id="promo-all-price" value="60">
+                </div>
+            </div>
+            <div class="field">
+                <label>Bank Details</label>
+                <textarea id="promo-bank-input" rows="4"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closePromoModal()">Cancel</button>
+                <button class="btn-activate" id="save-promo-btn">Save Promo</button>
+            </div>
+        </div>
+    </div>
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h3>Manage User</h3>
+            <div id="modal-user-details"></div>
+            <div class="field">
+                <label>Activation Expiry</label>
+                <input type="date" id="expiry-date">
+                <small>Leave empty for Lifetime</small>
+            </div>
+            <div class="field">
+                <label>Admin Notes</label>
+                <textarea id="admin-notes" placeholder="Enter private remarks..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-activate" id="activate-confirm-btn">Activate User</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcement Modal -->
+    <div id="announcementModal" class="modal">
+        <div class="modal-content">
+            <h3>Post Announcement</h3>
+            <div class="field">
+                <label>Content</label>
+                <textarea id="ann-content-input" rows="3" placeholder="Enter message for all users..."></textarea>
+            </div>
+            <div class="field">
+                <label>Type</label>
+                <select id="ann-type-input">
+                    <option value="info">Info (Blue)</option>
+                    <option value="success">Success (Green)</option>
+                    <option value="warning">Warning (Yellow)</option>
+                    <option value="danger">Danger (Red)</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeAnnouncementModal()">Cancel</button>
+                <button class="btn-activate" onclick="saveAnnouncement()">Post Announcement</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/security.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+
+</html>
