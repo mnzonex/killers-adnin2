@@ -12,6 +12,13 @@
 </head>
 
 <body class="admin-body">
+    <!-- Premium Preloader -->
+    <div id="preloader">
+        <img src="assets/logo.jpg" class="loader-logo" alt="Loading...">
+        <div class="loader-bar">
+            <div class="loader-progress"></div>
+        </div>
+    </div>
     <!-- Admin Lock Screen -->
     <div id="adminLockScreen" class="lock-overlay active">
         <div class="lock-card">
@@ -41,13 +48,17 @@
     </div>
 
     <div class="admin-wrapper">
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
         <!-- Sidebar -->
-        <aside class="admin-sidebar">
+        <aside class="admin-sidebar" id="adminSidebar">
             <div class="sidebar-logo">
                 <img src="assets/logo.jpg" alt="Logo">
                 <span>KILLERS <em>ADMIN</em></span>
             </div>
             <nav class="sidebar-nav">
+                <a href="#analytics" class="active" onclick="showTab('analytics')"><i class="fas fa-chart-line"></i> Analytics</a>
                 <a href="#users" onclick="showTab('users')"><i class="fas fa-users"></i> User Management</a>
                 <a href="#promo" onclick="showTab('promo')"><i class="fas fa-tag"></i> Promo Codes</a>
                 <a href="#announcements" onclick="showTab('announcements')"><i class="fas fa-bullhorn"></i>
@@ -62,7 +73,10 @@
         <!-- Main Content -->
         <main class="admin-main">
             <header class="admin-header">
-                <h2 id="tab-title">Analytics Overview</h2>
+                <div class="header-left">
+                    <button id="sidebarToggle" class="btn-toggle"><i class="fas fa-bars"></i></button>
+                    <h2 id="tab-title">Analytics Overview</h2>
+                </div>
                 <div class="admin-profile">
                     <span id="admin-email">admin@killersvip.com</span>
                     <div class="theme-toggle" onclick="toggleTheme()"><i class="fas fa-moon"></i></div>
@@ -196,6 +210,49 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content hidden" id="settings-tab">
+                <div class="admin-section">
+                    <h3><i class="fas fa-cog"></i> Admin Account Settings</h3>
+                    <div class="field-grid">
+                        <div class="field">
+                            <label>Display Email</label>
+                            <input type="email" id="admin-display-email-input" value="admin@killersvip.com">
+                        </div>
+                        <div class="field">
+                            <label>Admin Name</label>
+                            <input type="text" id="admin-name-input" placeholder="Admin Name">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>Website Name</label>
+                        <input type="text" placeholder="KILLERS VIP">
+                    </div>
+                    <div class="field">
+                        <label>Default WhatsApp Number</label>
+                        <input type="text" placeholder="+94 72 919 0799">
+                    </div>
+                    <button class="btn-activate" onclick="saveAdminSettings()">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </div>
+
+                <div class="admin-section" style="margin-top:2rem;">
+                    <h3><i class="fas fa-info-circle"></i> System Info</h3>
+                    <div class="info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+                        <div class="stat-card">
+                            <div class="stat-icon users"><i class="fas fa-code"></i></div>
+                            <div class="stat-info"><h3>v1.5</h3><p>Dashboard Version</p></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon active"><i class="fas fa-database"></i></div>
+                            <div class="stat-info"><h3>Supabase</h3><p>Database Provider</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -229,9 +286,18 @@
                     <input type="number" id="promo-all-price" value="60">
                 </div>
             </div>
+            <div id="dynamic-banks-container">
+                <!-- Banks injected via JS -->
+            </div>
+            <button type="button" class="btn-add" onclick="addBankForm()" style="margin-bottom: 1rem; width: 100%;"><i class="fas fa-plus"></i> Add Another Bank</button>
+
             <div class="field">
-                <label>Bank Details</label>
-                <textarea id="promo-bank-input" rows="4"></textarea>
+                <label>Binance ID (Pay ID) / Crypto (Optional)</label>
+                <input type="text" id="promo-binance-id" placeholder="e.g. 987654321">
+            </div>
+            <div class="field">
+                <label>Other Payment Details (Optional)</label>
+                <textarea id="promo-bank-input" rows="2"></textarea>
             </div>
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closePromoModal()">Cancel</button>

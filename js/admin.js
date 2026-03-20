@@ -219,7 +219,7 @@ function openUserModal(id) {
       .eq('id', selectedUser.id);
 
     if (error) {
-      alert('Error: ' + error.message);
+      window.showToast('Error: ' + error.message, 'error');
     } else {
       // Log this action
       await window.supabaseClient.from('activity_logs').insert({
@@ -271,8 +271,40 @@ function openPromoModal(code = null) {
     codeInp.value = p.code;
     codeInp.disabled = true;
     document.getElementById('promo-owner-input').value = p.owner_name;
-    document.getElementById('promo-whatsapp-input').value = p.whatsapp_number;
-    document.getElementById('promo-bank-input').value = p.bank_details;
+    
+    // Parse bank details JSON
+    let banks = [];
+    let binanceId = '';
+    let otherBank = '';
+    
+    try {
+        const parsed = JSON.parse(p.bank_details);
+        if (Array.isArray(parsed)) {
+            banks = parsed;
+        } else if (parsed && typeof parsed === 'object') {
+            banks = parsed.banks || [];
+            binanceId = parsed.binance || '';
+            otherBank = parsed.other || '';
+        }
+    } catch(e) {
+      if (typeof p.bank_details === 'string') {
+          banks = [{ bank: p.bank_details, branch: '', accName: '', accNo: '' }];
+      } else {
+          banks = [];
+      }
+    }
+    
+    document.getElementById('dynamic-banks-container').innerHTML = '';
+    
+    if (banks.length > 0) {
+        banks.forEach(b => addBankForm(b));
+    } else {
+        addBankForm(); // add at least one empty form
+    }
+
+    document.getElementById('promo-binance-id').value = binanceId;
+    document.getElementById('promo-bank-input').value = otherBank;
+
     document.getElementById('promo-crypto-price').value = p.crypto_price;
     document.getElementById('promo-forex-price').value = p.forex_price;
     document.getElementById('promo-all-price').value = p.all_price;
@@ -282,6 +314,9 @@ function openPromoModal(code = null) {
     codeInp.disabled = false;
     document.getElementById('promo-owner-input').value = '';
     document.getElementById('promo-whatsapp-input').value = '';
+    document.getElementById('dynamic-banks-container').innerHTML = '';
+    addBankForm();
+    document.getElementById('promo-binance-id').value = '';
     document.getElementById('promo-bank-input').value = '';
     document.getElementById('promo-crypto-price').value = 30;
     document.getElementById('promo-forex-price').value = 40;
@@ -294,13 +329,37 @@ function openPromoModal(code = null) {
 
 async function savePromo(isEdit = null) {
   const code = document.getElementById('promo-code-input').value.toUpperCase();
-  if (!code) return alert('Code is required');
+  if (!code) return window.showToast('Code is required', 'error');
+
+  const bBinance = document.getElementById('promo-binance-id').value;
+  const bOther = document.getElementById('promo-bank-input').value;
+  
+  // Gather dynamic bank details
+  const bankItems = document.querySelectorAll('.dynamic-bank-item');
+  const banks = [];
+  
+  bankItems.forEach(item => {
+    const bank = item.querySelector('.bank-name').value.trim();
+    const branch = item.querySelector('.bank-branch').value.trim();
+    const accName = item.querySelector('.bank-acc-name').value.trim();
+    const accNo = item.querySelector('.bank-acc-no').value.trim();
+    
+    if (bank || branch || accName || accNo) {
+        banks.push({ bank, branch, accName, accNo });
+    }
+  });
+
+  const combinedBank = JSON.stringify({
+      banks: banks,
+      binance: bBinance,
+      other: bOther
+  });
 
   const payload = {
     code: code,
     owner_name: document.getElementById('promo-owner-input').value,
     whatsapp_number: document.getElementById('promo-whatsapp-input').value,
-    bank_details: document.getElementById('promo-bank-input').value,
+    bank_details: combinedBank,
     crypto_price: parseFloat(document.getElementById('promo-crypto-price').value),
     forex_price: parseFloat(document.getElementById('promo-forex-price').value),
     all_price: parseFloat(document.getElementById('promo-all-price').value)
@@ -309,9 +368,10 @@ async function savePromo(isEdit = null) {
   const { error } = await window.supabaseClient.from('promo_codes').upsert(payload);
 
   if (error) {
-    alert('Error: ' + error.message);
+    window.showToast('Error: ' + error.message, 'error');
   } else {
     closePromoModal();
+    window.showToast('Promo code saved!', 'success');
     refreshData();
   }
 }
@@ -348,15 +408,16 @@ async function saveAnnouncement() {
   const content = document.getElementById('ann-content-input').value;
   const type = document.getElementById('ann-type-input').value;
 
-  if (!content) return alert('Please enter announcement content');
+  if (!content) return window.showToast('Please enter announcement content', 'error');
 
   const { error } = await window.supabaseClient
     .from('announcements')
     .insert({ content, type });
 
-  if (error) alert(error.message);
+  if (error) window.showToast(error.message, 'error');
   else {
     closeAnnouncementModal();
+    window.showToast('Announcement posted!', 'success');
     refreshData();
   }
 }
@@ -364,8 +425,8 @@ async function saveAnnouncement() {
 async function deleteAnnouncement(id) {
   if (!confirm('Are you sure you want to delete this announcement?')) return;
   const { error } = await window.supabaseClient.from('announcements').delete().eq('id', id);
-  if (error) alert(error.message);
-  else refreshData();
+  if (error) window.showToast(error.message, 'error');
+  else window.showToast('Announcement deleted', 'success'); refreshData();
 }
 
 function editPromo(code) {
@@ -380,15 +441,55 @@ function showTab(tabId) {
   document.querySelector(`.sidebar-nav a[href="#${tabId}"]`).classList.add('active');
 
   const titleMap = {
+    analytics: 'Analytics Overview',
     users: 'User Management',
     promo: 'Promo Codes',
     announcements: 'Global Announcements',
     settings: 'Admin Settings'
   };
   document.getElementById('tab-title').textContent = titleMap[tabId] || 'Dashboard';
+  
+  // Close sidebar on mobile after clicking
+  if (window.innerWidth <= 1024) {
+    document.getElementById('adminSidebar').classList.remove('active');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (overlay) overlay.classList.remove('active');
+  }
 }
 
-window.onload = initAdmin;
+function saveAdminSettings() {
+    const email = document.getElementById('admin-display-email-input').value;
+    document.getElementById('admin-email').textContent = email;
+    window.showToast('Settings saved locally! (DB implementation required)', 'success');
+}
+
+// Sidebar Toggle with overlay
+document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+    const sidebar = document.getElementById('adminSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    
+    if (window.innerWidth <= 1024) {
+        sidebar.classList.toggle('active');
+        if (overlay) overlay.classList.toggle('active');
+    } else {
+        document.body.classList.toggle('sidebar-collapsed');
+    }
+});
+
+// Close sidebar when overlay is clicked
+document.getElementById('sidebarOverlay')?.addEventListener('click', () => {
+    document.getElementById('adminSidebar').classList.remove('active');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+});
+
+window.onload = async () => {
+    await initAdmin();
+    const preloader = document.getElementById('preloader');
+    if (preloader) {
+        preloader.classList.add('loaded');
+        setTimeout(() => preloader.style.display = 'none', 1000);
+    }
+};
 document.getElementById('user-search').addEventListener('input', updateUserTable);
 document.getElementById('status-filter').addEventListener('change', updateUserTable);
 
@@ -397,3 +498,55 @@ window.openAnnouncementModal = openAnnouncementModal;
 window.closeAnnouncementModal = closeAnnouncementModal;
 window.saveAnnouncement = saveAnnouncement;
 window.deleteAnnouncement = deleteAnnouncement;
+
+function toggleTheme() {
+  document.body.classList.toggle('light-theme');
+}
+
+window.showTab = showTab;
+window.openPromoModal = openPromoModal;
+window.closePromoModal = closePromoModal;
+window.savePromo = savePromo;
+window.openUserModal = openUserModal;
+window.closeModal = closeModal;
+window.toggleTheme = toggleTheme;
+window.saveAdminSettings = saveAdminSettings;
+window.editPromo = editPromo;
+
+function addBankForm(data = { bank: '', branch: '', accName: '', accNo: '' }) {
+    const container = document.getElementById('dynamic-banks-container');
+    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+    
+    const html = `
+        <div class="dynamic-bank-item admin-section" id="bank-${id}" style="position: relative; padding: 1rem; margin-bottom: 1rem;">
+            <button type="button" class="btn-manage danger" style="position: absolute; top: 10px; right: 10px; padding: 0.3rem 0.6rem;" onclick="removeBankForm('bank-${id}')"><i class="fas fa-times"></i></button>
+            <h4 style="margin-bottom: 0.8rem; font-size: 0.95rem;">Bank Detail</h4>
+            <div class="field-grid">
+                <div class="field">
+                    <label>Bank Name</label>
+                    <input type="text" class="bank-name" placeholder="e.g. HNB Bank" value="${data.bank}">
+                </div>
+                <div class="field">
+                    <label>Branch</label>
+                    <input type="text" class="bank-branch" placeholder="e.g. Colombo 01" value="${data.branch}">
+                </div>
+                <div class="field">
+                    <label>Account Name</label>
+                    <input type="text" class="bank-acc-name" placeholder="e.g. John Doe" value="${data.accName}">
+                </div>
+                <div class="field">
+                    <label>Account Number</label>
+                    <input type="text" class="bank-acc-no" placeholder="e.g. 12345678" value="${data.accNo}">
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', html);
+}
+
+window.addBankForm = addBankForm;
+window.removeBankForm = function(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+};

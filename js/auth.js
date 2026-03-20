@@ -5,7 +5,10 @@ async function signInWithGoogle() {
             redirectTo: window.location.origin + '/index.html'
         }
     });
-    if (error) alert(error.message);
+    if (error) {
+        if (window.showToast) window.showToast(error.message, 'error');
+        else alert(error.message);
+    }
 }
 
 async function signOut() {
