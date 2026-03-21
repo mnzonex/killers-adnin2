@@ -426,7 +426,7 @@ async function deleteAnnouncement(id) {
   if (!confirm('Are you sure you want to delete this announcement?')) return;
   const { error } = await window.supabaseClient.from('announcements').delete().eq('id', id);
   if (error) window.showToast(error.message, 'error');
-  else window.showToast('Announcement deleted', 'success'); refreshData();
+  else { window.showToast('Announcement deleted', 'success'); refreshData(); }
 }
 
 function editPromo(code) {
@@ -484,11 +484,6 @@ document.getElementById('sidebarOverlay')?.addEventListener('click', () => {
 
 window.onload = async () => {
     await initAdmin();
-    const preloader = document.getElementById('preloader');
-    if (preloader) {
-        preloader.classList.add('loaded');
-        setTimeout(() => preloader.style.display = 'none', 1000);
-    }
 };
 document.getElementById('user-search').addEventListener('input', updateUserTable);
 document.getElementById('status-filter').addEventListener('change', updateUserTable);
