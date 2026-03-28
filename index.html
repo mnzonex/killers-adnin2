@@ -56,6 +56,7 @@
                 <a href="#analytics" class="active" onclick="showTab('analytics')"><i class="fas fa-chart-line"></i> Analytics</a>
                 <a href="#users" onclick="showTab('users')"><i class="fas fa-users"></i> User Management</a>
                 <a href="#promo" onclick="showTab('promo')"><i class="fas fa-tag"></i> Promo Codes</a>
+                <a href="#links" onclick="showTab('links')"><i class="fas fa-link"></i> Group Links</a>
                 <a href="#announcements" onclick="showTab('announcements')"><i class="fas fa-bullhorn"></i>
                     Announcements</a>
                 <a href="#settings" onclick="showTab('settings')"><i class="fas fa-cog"></i> Settings</a>
@@ -206,6 +207,38 @@
                 </div>
             </div>
 
+            <div class="tab-content hidden" id="links-tab">
+                <div class="promo-header">
+                    <h3>Group Links Management</h3>
+                    <button class="btn-add" onclick="openLinkModal()"><i class="fas fa-plus"></i> Add New Link</button>
+                </div>
+                <!-- Package Filter -->
+                <div class="user-filters" style="margin-bottom: 1rem;">
+                    <select id="link-package-filter" onchange="updateLinksTable()">
+                        <option value="All">All Packages</option>
+                        <option value="Free">Free Plan</option>
+                        <option value="Crypto VIP">Crypto VIP</option>
+                        <option value="Forex VIP">Forex VIP</option>
+                        <option value="All-in-One VIP">All-in-One VIP</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Link Name</th>
+                                <th>URL</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="links-table-body">
+                            <!-- Injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Settings Tab -->
             <div class="tab-content hidden" id="settings-tab">
                 <div class="admin-section">
@@ -340,6 +373,35 @@
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeAnnouncementModal()">Cancel</button>
                 <button class="btn-activate" onclick="saveAnnouncement()">Post Announcement</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Group Link Modal -->
+    <div id="linkModal" class="modal">
+        <div class="modal-content">
+            <h3 id="link-modal-title">Add New Link</h3>
+            <input type="hidden" id="link-id-input">
+            <div class="field">
+                <label>Package</label>
+                <select id="link-package-input">
+                    <option value="Free">Free Plan</option>
+                    <option value="Crypto VIP">Crypto VIP</option>
+                    <option value="Forex VIP">Forex VIP</option>
+                    <option value="All-in-One VIP">All-in-One VIP</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Link Name (e.g., Crypto Telegram)</label>
+                <input type="text" id="link-name-input" placeholder="Enter friendly name">
+            </div>
+            <div class="field">
+                <label>URL</label>
+                <input type="url" id="link-url-input" placeholder="https://t.me/...">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeLinkModal()">Cancel</button>
+                <button class="btn-activate" id="save-link-btn" onclick="saveLink()">Save Link</button>
             </div>
         </div>
     </div>

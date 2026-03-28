@@ -1,6 +1,7 @@
 let allUsers = [];
 let allPromoCodes = [];
 let allAnnouncements = [];
+let allGroupLinks = [];
 let selectedUser = null;
 
 // The logic will now purely check against admin_config table
@@ -98,10 +99,28 @@ async function refreshData() {
     if (annError) throw annError;
     allAnnouncements = announcements;
 
+    // 4. Fetch Group Links from admin_config
+    const { data: configData, error: configError } = await window.supabaseClient
+      .from('admin_config')
+      .select('key_value')
+      .eq('key_name', 'group_links')
+      .single();
+
+    if (configData && configData.key_value) {
+      try {
+        allGroupLinks = JSON.parse(configData.key_value);
+      } catch (e) {
+        allGroupLinks = [];
+      }
+    } else {
+      allGroupLinks = [];
+    }
+
     updateDashboard();
     updateUserTable();
     updatePromoTable();
     updateAnnouncementTable();
+    updateLinksTable();
   } catch (err) {
     console.error('Refresh error:', err);
   }
@@ -444,6 +463,7 @@ function showTab(tabId) {
     analytics: 'Analytics Overview',
     users: 'User Management',
     promo: 'Promo Codes',
+    links: 'Group Links',
     announcements: 'Global Announcements',
     settings: 'Admin Settings'
   };
@@ -507,6 +527,116 @@ window.closeModal = closeModal;
 window.toggleTheme = toggleTheme;
 window.saveAdminSettings = saveAdminSettings;
 window.editPromo = editPromo;
+
+// Group Links Functions
+function updateLinksTable() {
+  const filter = document.getElementById('link-package-filter').value;
+  let filtered = allGroupLinks;
+  if (filter !== 'All') {
+    filtered = allGroupLinks.filter(l => l.package === filter);
+  }
+  
+  const tbody = document.getElementById('links-table-body');
+  tbody.innerHTML = filtered.map(l => `
+    <tr>
+      <td><span class="badge ${l.package.split(' ')[0].toLowerCase()}">${l.package}</span></td>
+      <td><strong>${l.name}</strong></td>
+      <td><a href="${l.url}" target="_blank">${l.url}</a></td>
+      <td>
+        <button class="btn-manage" onclick="editLink('${l.id}')"><i class="fas fa-edit"></i> Edit</button>
+        <button class="btn-manage danger" onclick="deleteLink('${l.id}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openLinkModal(id = null) {
+  const modal = document.getElementById('linkModal');
+  const title = document.getElementById('link-modal-title');
+  const idInp = document.getElementById('link-id-input');
+  
+  if (id) {
+    const l = allGroupLinks.find(x => x.id === id);
+    title.innerHTML = '<i class="fas fa-edit"></i> Edit Link';
+    idInp.value = l.id;
+    document.getElementById('link-package-input').value = l.package;
+    document.getElementById('link-name-input').value = l.name;
+    document.getElementById('link-url-input').value = l.url;
+  } else {
+    title.innerHTML = '<i class="fas fa-plus-circle"></i> Add New Link';
+    idInp.value = '';
+    document.getElementById('link-package-input').value = 'Free';
+    document.getElementById('link-name-input').value = '';
+    document.getElementById('link-url-input').value = '';
+  }
+  modal.classList.add('active');
+}
+
+function closeLinkModal() {
+  document.getElementById('linkModal').classList.remove('active');
+}
+
+async function saveLink() {
+  const idValue = document.getElementById('link-id-input').value;
+  const pkg = document.getElementById('link-package-input').value;
+  const name = document.getElementById('link-name-input').value.trim();
+  const url = document.getElementById('link-url-input').value.trim();
+
+  if (!name || !url) return window.showToast('Please fill all fields', 'error');
+
+  const newLink = {
+    id: idValue || Date.now().toString(),
+    package: pkg,
+    name: name,
+    url: url
+  };
+
+  let newArray = [...allGroupLinks];
+  if (idValue) {
+    const idx = newArray.findIndex(l => l.id === idValue);
+    if (idx !== -1) newArray[idx] = newLink;
+  } else {
+    newArray.push(newLink);
+  }
+
+  const { error } = await window.supabaseClient.from('admin_config').upsert({
+    key_name: 'group_links',
+    key_value: JSON.stringify(newArray)
+  });
+
+  if (error) {
+    window.showToast(error.message, 'error');
+  } else {
+    window.showToast('Link Saved', 'success');
+    closeLinkModal();
+    refreshData();
+  }
+}
+
+async function deleteLink(id) {
+  if (!confirm('Are you sure you want to delete this link?')) return;
+  const newArray = allGroupLinks.filter(l => l.id !== id);
+  const { error } = await window.supabaseClient.from('admin_config').upsert({
+    key_name: 'group_links',
+    key_value: JSON.stringify(newArray)
+  });
+  if (error) window.showToast(error.message, 'error');
+  else {
+    window.showToast('Link Deleted', 'success');
+    refreshData();
+  }
+}
+
+function editLink(id) {
+  openLinkModal(id);
+}
+
+window.updateLinksTable = updateLinksTable;
+window.openLinkModal = openLinkModal;
+window.closeLinkModal = closeLinkModal;
+window.saveLink = saveLink;
+window.deleteLink = deleteLink;
+window.editLink = editLink;
 
 function addBankForm(data = { bank: '', branch: '', accName: '', accNo: '' }) {
     const container = document.getElementById('dynamic-banks-container');
